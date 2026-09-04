@@ -592,6 +592,11 @@
     border-top:1px solid var(--line-soft);padding-top:10px;margin-top:2px;
   }
   .entry-app b{color:var(--gold);font-weight:600}
+  .getmod{
+    font-family:'Spectral',serif;font-size:.84rem;color:var(--muted);
+    line-height:1.5;margin:-4px 0 14px;
+  }
+  .getmod a{color:var(--gold);font-weight:600}
   .entry-err{
     font-family:'Spectral',serif;font-size:.88rem;line-height:1.55;
     color:var(--parch);background:rgba(192,90,61,.1);
@@ -765,6 +770,7 @@
   <div class="entry">
     <div class="entry-steps">
       <p class="entry-h">Getting your file</p>
+      <p class="getmod">Not installed the mod yet? <a href="https://www.nexusmods.com/games/skyrimspecialedition/mods/190653" target="_blank" rel="noopener">Get it on Nexus</a> - this page reads the file it writes.</p>
       <ol class="steps">
         <li>Cast <b>Alchemist's Ledger</b> in game. The first cast on a new load order takes a few minutes while it reads every ingredient - longer on a big one, or if you keep playing while it works. After that it is near instant.</li>
         <li>Open <code>Data/SKSE/Plugins/StorageUtilData/</code> in your Skyrim folder and take <code>AlchemistsLedger.json</code>.<span class="alt">Mod Organizer 2 writes it to <code>overwrite/SKSE/Plugins/StorageUtilData/</code> instead. Ignore the file with <code>DO_NOT_UPLOAD</code> in its name — that one is the mod's own cache.</span></li>
@@ -823,7 +829,7 @@
       <summary>Where the data comes from</summary>
       <div class="acc-body">
         <p>Every ingredient, effect, magnitude and duration comes from <b>your</b> running game, read by the companion mod. Nothing here is hand-curated, so it matches whatever mods you actually have installed.</p>
-        <p>The mod is not on Nexus yet. When it is released this page will link to it.</p>
+        <p>The companion mod is on Nexus: <a href="https://www.nexusmods.com/games/skyrimspecialedition/mods/190653" target="_blank" rel="noopener">The Alchemist's Ledger</a>.</p>
         <p>There is nothing to configure. Whatever is in your load order is what you see — Creation Club, mod-added or vanilla, all treated the same, because your game already decided what you have.</p>
       </div>
     </details>

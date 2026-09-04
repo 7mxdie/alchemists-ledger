@@ -18,7 +18,7 @@ have installed is what you see.
 
 ## How to use it
 
-1. Install the companion mod *(link to follow — not yet released)*
+1. Install the [companion mod](https://www.nexusmods.com/games/skyrimspecialedition/mods/190653) from Nexus
 2. Cast **Alchemist's Ledger**, under Magic → Powers
 3. Drop `AlchemistsLedger.json` onto the page
 
