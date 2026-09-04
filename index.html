@@ -2565,21 +2565,27 @@
         fail('That file is not valid JSON. If you opened or edited it by hand, export it again from the game.');
         return;
       }
-      const v=validateImport(parsed,file.size);
-      if(!v.ok){fail(v.error);return;}
-      if(!parsed.catalogue||!parsed.catalogue.name||!parsed.catalogue.name.length){
-        fail('That export has no catalogue in it. Cast Record the Ledger again - the first cast on a new load order builds the catalogue and takes about a minute.');
-        return;
-      }
-      const owned=loadFromExport(parsed);
-      if(!DATA.length){
-        fail('That export contained no usable ingredients. Cast Record the Ledger again and let the catalogue finish building.');
-        return;
-      }
-      setDataNote(file.name,owned);
-      done();
+      acceptExport(parsed,file.name,file.size,fail,done);
     };
     reader.readAsText(file);
+  }
+
+  // Everything past the parse, shared by the dropped file and by the desktop
+  // launcher, which hands over an already-parsed object.
+  function acceptExport(parsed,label,byteLength,fail,done){
+    const v=validateImport(parsed,byteLength);
+    if(!v.ok){fail(v.error);return;}
+    if(!parsed.catalogue||!parsed.catalogue.name||!parsed.catalogue.name.length){
+      fail('That export has no catalogue in it. Cast Record the Ledger again - the first cast on a new load order builds the catalogue and takes about a minute.');
+      return;
+    }
+    const owned=loadFromExport(parsed);
+    if(!DATA.length){
+      fail('That export contained no usable ingredients. Cast Record the Ledger again and let the catalogue finish building.');
+      return;
+    }
+    setDataNote(label,owned);
+    done();
   }
 
   // The header note that has always existed in the markup but was never filled.
@@ -2592,6 +2598,77 @@
 
   // Starts closed, so it starts inert.
   $('ownedDrawer').inert=true;
+
+  // ---- LAUNCHER REGION START ----
+  // The desktop launcher serves this same page from localhost and exposes the
+  // export it found on disk. On the web these requests 404 and nothing here
+  // does anything, so the first screen behaves exactly as it always has.
+  const LAUNCH_STATUS='./__ledger/status';
+  const LAUNCH_EXPORT='./__ledger/export.json';
+  let launchSeen=null, launchTimer=null;
+
+  function launchFetch(url){
+    return fetch(url,{cache:'no-store'}).then(function(r){
+      if(!r.ok)throw new Error('http '+r.status);
+      return r.json();
+    });
+  }
+
+  // Pull the file the launcher found and drop straight into the app.
+  function launchLoad(st,announce){
+    return launchFetch(LAUNCH_EXPORT).then(function(parsed){
+      acceptExport(parsed,st.name||'AlchemistsLedger.json',st.size||0,
+        function(msg){showEntryError(msg);entryBusy(false);},
+        function(){
+          launchSeen=st.mtime;
+          enterApp();
+          if(announce)flashReloaded();
+        });
+    });
+  }
+
+  function flashReloaded(){
+    const el=$('packNote');
+    el.innerHTML='Your export changed on disk, so the Ledger reloaded it.';
+    el.classList.remove('hidden');
+    setTimeout(function(){setViewNote();},6000);
+  }
+
+  // Watching the file is the whole reason the launcher exists - it is the one
+  // thing a page in a browser cannot do for you.
+  function launchWatch(){
+    clearInterval(launchTimer);
+    launchTimer=setInterval(function(){
+      launchFetch(LAUNCH_STATUS).then(function(st){
+        if(!st.found||st.mtime===launchSeen)return;
+        launchLoad(st,true).catch(function(){});
+      }).catch(function(){});
+    },3000);
+  }
+
+  (function launchInit(){
+    // Only the launcher serves this page from loopback, so probing anywhere
+    // else is a guaranteed 404 - and a red line in the console of every
+    // visitor who opens devtools on the public site.
+    const h=location.hostname;
+    if(h!=='127.0.0.1'&&h!=='localhost'&&h!=='[::1]')return;
+    launchFetch(LAUNCH_STATUS).then(function(st){
+      document.body.classList.add('is-launcher');
+      if(!st.found){
+        // Running in the launcher but it could not find the file. Say so on
+        // the first screen rather than pretending nothing happened.
+        $('entryDropSub').textContent='Not found automatically — drop it here';
+        const note=$('entryErr');
+        note.innerHTML='<b>Could not find your export</b>Looked in your Skyrim folders and the Mod Organizer 2 overwrite folder. Drop the file here and the Ledger will remember where it lives.';
+        note.classList.remove('hidden');
+        launchWatch();
+        return;
+      }
+      entryBusy(true);
+      launchLoad(st,false).then(launchWatch).catch(function(){entryBusy(false);});
+    }).catch(function(){/* plain web page, nothing to do */});
+  })();
+  // ---- LAUNCHER REGION END ----
 
   // ---- Go ----
   // Nothing else runs on load. The app stays hidden behind the first screen
