@@ -2109,7 +2109,7 @@
   function setViewNote(){
     const el=$('packNote');
     const show=Inventory.isEmpty()&&isRecipeView();
-    if(show)el.innerHTML='Your export recorded nothing in your pack, so <b>Your Ledger</b> is empty. Cast <b>Alchemist's Ledger</b> again while carrying ingredients, or browse everything below.';
+    if(show)el.innerHTML='Your export recorded nothing in your pack, so <b>Your Ledger</b> is empty. Cast <b>Alchemist\'s Ledger</b> again while carrying ingredients, or browse everything below.';
     el.classList.toggle('hidden',!show);
   }
 
@@ -2754,12 +2754,12 @@
     const v=validateImport(parsed,byteLength);
     if(!v.ok){fail(v.error);return;}
     if(!parsed.catalogue||!parsed.catalogue.name||!parsed.catalogue.name.length){
-      fail('That export has no catalogue in it. Cast Alchemist's Ledger again - the first cast on a new load order builds the catalogue and takes about a minute.');
+      fail('That export has no catalogue in it. Cast Alchemist\'s Ledger again - the first cast on a new load order builds the catalogue and takes a few minutes.');
       return;
     }
     const owned=loadFromExport(parsed);
     if(!DATA.length){
-      fail('That export contained no usable ingredients. Cast Alchemist's Ledger again and let the catalogue finish building.');
+      fail('That export contained no usable ingredients. Cast Alchemist\'s Ledger again and let the catalogue finish building.');
       return;
     }
     setDataNote(label,owned);
