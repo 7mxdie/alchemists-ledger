@@ -40,7 +40,7 @@ anywhere.
 ## The desktop version
 
 There is also a small desktop app, and if you brew often it is the better way
-to use this. One file, about 2.6 MB, nothing to install.
+to use this. One file, about 3 MB, nothing to install.
 
 It finds `AlchemistsLedger.json` by itself — Steam, GOG and Epic installs, and
 the Mod Organizer 2 overwrite folder — so there is no dragging and no hunting
@@ -53,6 +53,13 @@ exists.
 
 It ships with the mod as a separate download. The page it shows is this same
 page, served locally, so the two never drift apart.
+
+**Windows will warn you the first time you run it.** SmartScreen calls it an
+unrecognised app from an unknown publisher, which only means the exe is not
+code signed — a certificate that would clear the warning costs a few hundred
+pounds a year, and this is free. Click *More info*, then *Run anyway*. The
+SHA-256 is published on the Nexus page if you would rather verify the download
+first.
 
 ---
 
