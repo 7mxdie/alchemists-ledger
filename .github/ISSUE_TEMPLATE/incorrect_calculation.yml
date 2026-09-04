@@ -1,0 +1,67 @@
+name: "⚗️ Incorrect Calculation"
+description: A recipe or value appears to be incorrect.
+title: "[Calculation]: "
+labels: ["⚗️ calculation"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before you file — one thing that surprises most people.**
+
+        Potency is a **config-independent** ranking. It measures how strong a
+        combination is *inherently*, and deliberately does **not** account for
+        your Alchemy skill, perks, Fortify Alchemy gear, or anything else about
+        your character.
+
+        The Ledger answers **"what should I combine?"** — and that answer is the
+        same whether you are level 5 or level 50. A per-character estimate was
+        built and then removed for exactly this reason.
+
+        So a value differing from what your game shows in the alchemy menu is
+        **expected**, not a bug. What *is* worth reporting: wrong effects on an
+        ingredient, a missing or duplicated ingredient, a recipe that cannot
+        actually be brewed, or a ranking that looks wrong relative to other
+        recipes in the list.
+
+  - type: dropdown
+    id: dataset
+    attributes:
+      label: Dataset
+      options:
+        - GTS
+        - GTS CE
+    validations:
+      required: true
+
+  - type: input
+    id: ingredients
+    attributes:
+      label: Ingredient(s)
+      placeholder: Blue Mountain Flower + Wheat
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: What looks wrong?
+      description: What does the Ledger show, and what did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: ingame
+    attributes:
+      label: What does the game show?
+      description: |
+        Optional. If you have compared against an alchemy table in game, say what
+        it showed. Remember that magnitudes there include your skill and perks,
+        so they will not match the Ledger's numbers — the useful comparison is
+        which *effects* appear, not how large they are.
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshot
+      description: Drag images into this box if helpful.
