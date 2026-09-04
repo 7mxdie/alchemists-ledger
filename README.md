@@ -19,7 +19,7 @@ have installed is what you see.
 ## How to use it
 
 1. Install the companion mod *(link to follow — not yet released)*
-2. Cast **Record the Ledger**, under Magic → Powers
+2. Cast **Alchemist's Ledger**, under Magic → Powers
 3. Drop `AlchemistsLedger.json` onto the page
 
 You will find the file in `Data/SKSE/Plugins/StorageUtilData/` inside your
@@ -27,9 +27,10 @@ Skyrim folder. Mod Organizer 2 writes it to
 `overwrite/SKSE/Plugins/StorageUtilData/` instead. Ignore the file with
 `DO_NOT_UPLOAD` in its name — that one is the mod's own cache.
 
-The first cast on a new load order takes about a minute while it reads every
-ingredient. After that it is instant, and it rebuilds itself whenever you
-change your mods.
+The first cast on a new load order takes a few minutes while it reads every
+ingredient in every plugin - longer on a very large one, or if you carry on
+playing while it works. After that it is near instant, and it rebuilds itself
+whenever you change your mods.
 
 Nothing is uploaded. The page reads the file in your browser and never sends it
 anywhere.

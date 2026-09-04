@@ -766,7 +766,7 @@
     <div class="entry-steps">
       <p class="entry-h">Getting your file</p>
       <ol class="steps">
-        <li>Cast <b>Record the Ledger</b> in game. The first cast on a new load order takes about a minute; after that it is instant.</li>
+        <li>Cast <b>Alchemist's Ledger</b> in game. The first cast on a new load order takes a few minutes while it reads every ingredient - longer on a big one, or if you keep playing while it works. After that it is near instant.</li>
         <li>Open <code>Data/SKSE/Plugins/StorageUtilData/</code> in your Skyrim folder and take <code>AlchemistsLedger.json</code>.<span class="alt">Mod Organizer 2 writes it to <code>overwrite/SKSE/Plugins/StorageUtilData/</code> instead. Ignore the file with <code>DO_NOT_UPLOAD</code> in its name — that one is the mod's own cache.</span></li>
         <li>Drop it here. It is read in your browser and never uploaded anywhere.</li>
       </ol>
@@ -944,7 +944,7 @@
     <h2>Owned Ingredients</h2>
     <button type="button" class="owned-drawer-close" id="ownedDrawerClose" aria-label="Close">×</button>
   </div>
-  <p class="owned-note">What your last export says you are carrying. To change it, cast <b>Record the Ledger</b> in game and load the new file.</p>
+  <p class="owned-note">What your last export says you are carrying. To change it, cast <b>Alchemist's Ledger</b> in game and load the new file.</p>
   <div class="owned-list" id="ownedList"></div>
 </aside>
 
@@ -2109,7 +2109,7 @@
   function setViewNote(){
     const el=$('packNote');
     const show=Inventory.isEmpty()&&isRecipeView();
-    if(show)el.innerHTML='Your export recorded nothing in your pack, so <b>Your Ledger</b> is empty. Cast <b>Record the Ledger</b> again while carrying ingredients, or browse everything below.';
+    if(show)el.innerHTML='Your export recorded nothing in your pack, so <b>Your Ledger</b> is empty. Cast <b>Alchemist's Ledger</b> again while carrying ingredients, or browse everything below.';
     el.classList.toggle('hidden',!show);
   }
 
@@ -2754,12 +2754,12 @@
     const v=validateImport(parsed,byteLength);
     if(!v.ok){fail(v.error);return;}
     if(!parsed.catalogue||!parsed.catalogue.name||!parsed.catalogue.name.length){
-      fail('That export has no catalogue in it. Cast Record the Ledger again - the first cast on a new load order builds the catalogue and takes about a minute.');
+      fail('That export has no catalogue in it. Cast Alchemist's Ledger again - the first cast on a new load order builds the catalogue and takes about a minute.');
       return;
     }
     const owned=loadFromExport(parsed);
     if(!DATA.length){
-      fail('That export contained no usable ingredients. Cast Record the Ledger again and let the catalogue finish building.');
+      fail('That export contained no usable ingredients. Cast Alchemist's Ledger again and let the catalogue finish building.');
       return;
     }
     setDataNote(label,owned);
