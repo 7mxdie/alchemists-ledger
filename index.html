@@ -588,6 +588,10 @@
     font-family:'Spectral',serif;font-size:.82rem;color:var(--muted);
     line-height:1.5;margin:0;text-align:center;
   }
+  .entry-app{
+    border-top:1px solid var(--line-soft);padding-top:10px;margin-top:2px;
+  }
+  .entry-app b{color:var(--gold);font-weight:600}
   .entry-err{
     font-family:'Spectral',serif;font-size:.88rem;line-height:1.55;
     color:var(--parch);background:rgba(192,90,61,.1);
@@ -780,6 +784,8 @@
       <input type="file" id="entryFile" accept="application/json,.json" hidden>
       <p class="entry-err hidden" id="entryErr"></p>
       <p class="entry-note">Everything happens on your machine. No account, no upload, no tracking.</p>
+      <p class="entry-note entry-app">Tired of finding this file? There is a <b>desktop version</b> that finds it
+      for you and updates itself every time you cast. It comes with the mod.</p>
     </div>
   </div>
 
@@ -798,6 +804,15 @@
         <p class="formula-caption">Shown to explain why the two numbers differ. It is not the game's real formula, and not a calculation the Ledger performs.</p>
         <p>The Ledger leaves all of that out on purpose. If it counted your skill and gear, the ranking would shift every time you levelled up or swapped a ring, and it would be different for every character. Leaving it out means one ranking that is true for everyone and stays true as you level.</p>
         <p>So: use Potency to decide <b>what to combine</b>. Use your alchemy menu to see what you actually get.</p>
+      </div>
+    </details>
+    <details class="acc-item">
+      <summary>Is there a desktop version?</summary>
+      <div class="acc-body">
+        <p>Yes, and it is the better way to use this if you brew often. It is one small file, nothing to install.</p>
+        <p>It finds <code>AlchemistsLedger.json</code> on your machine by itself — Steam, GOG and Epic installs, and the Mod Organizer 2 overwrite folder — so there is no dragging and no hunting through folders. If it cannot find yours it asks once and remembers.</p>
+        <p><b>It also watches the file.</b> Leave it open beside the game, cast the power again, and the Ledger reloads itself with what you are carrying now. A web page cannot do that, which is the whole reason it exists.</p>
+        <p>It comes with the mod, as a separate download.</p>
       </div>
     </details>
     <details class="acc-item">

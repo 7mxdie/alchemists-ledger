@@ -36,6 +36,25 @@ anywhere.
 
 ---
 
+## The desktop version
+
+There is also a small desktop app, and if you brew often it is the better way
+to use this. One file, about 2.6 MB, nothing to install.
+
+It finds `AlchemistsLedger.json` by itself — Steam, GOG and Epic installs, and
+the Mod Organizer 2 overwrite folder — so there is no dragging and no hunting
+through folders. If it cannot find yours it asks once and remembers.
+
+**It also watches the file.** Leave it open beside the game, cast the power
+again, and the Ledger reloads itself with whatever you are carrying now. A web
+page cannot see a file change on disk, which is the whole reason the app
+exists.
+
+It ships with the mod as a separate download. The page it shows is this same
+page, served locally, so the two never drift apart.
+
+---
+
 ## What you get
 
 **Your Ledger** — the best recipes you can make right now, from what you are
