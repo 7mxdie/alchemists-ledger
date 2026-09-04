@@ -316,6 +316,25 @@
      piece of feedback is people reading this number as gold or as their own
      potion's strength, so the correction lives where the number is. */
   .chk[hidden]{display:none}
+  .effpick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px}
+  .effpick.hidden{display:none}
+  .effpick-label,.effpick-and{
+    font-family:'Cinzel',serif;font-size:.68rem;font-weight:600;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  }
+  .effpick-and{margin:0 2px}
+  .effchip{
+    font-family:'Spectral',serif;font-size:.82rem;
+    background:var(--stone);border:1px solid var(--line);color:var(--parch-dim);
+    border-radius:14px;padding:4px 12px;cursor:pointer;transition:all .12s;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .effchip:hover{border-color:var(--gold-dim);color:var(--parch)}
+  .effchip.on{background:rgba(201,162,74,.16);border-color:var(--gold);color:var(--gold-bright)}
+  .effchip.on .x{color:var(--gold-dim);font-size:1.05em;line-height:1}
+  .effchip.on:hover .x{color:var(--rust)}
+  .effchip.more{background:transparent;border-style:dashed;color:var(--muted);font-style:italic}
+  .effchip.clear{background:transparent;border-style:dashed;border-color:rgba(192,90,61,.4);color:var(--rust)}
   .igtbl .c-ing{min-width:170px}
   .igtbl .ing-n{color:var(--parch);font-weight:500}
   .igtbl .c-have-n{color:var(--emerald)}
@@ -864,6 +883,7 @@
         <div class="req" id="reqChip"><span>with&nbsp;<b id="reqName"></b></span><button id="reqClear" title="Remove filter" aria-label="Remove ingredient filter">×</button></div>
         <div class="req" id="effectChip"><span>with effect&nbsp;<b id="effectChipName"></b></span><button id="effectClear" title="Remove filter" aria-label="Remove effect filter">×</button></div>
       </div>
+      <div class="effpick hidden" id="effPick"></div>
       <p class="viewnote hidden" id="packNote" role="status"></p>
       <details class="potkey">
         <summary>
@@ -1086,7 +1106,7 @@
         var ownedOrder=Array.from(ownedSet||[]);
         var ownedBuild=buildFrom(ownedOrder);
         useC2=ownedBuild.C2;useC3=ownedBuild.C3;
-      }else if(c.effectKey){
+      }else if(c.effectKeys&&c.effectKeys.length){
         // Reverse Search (effect filter). Rebuilt from scratch rather than
         // filtering the capped top-180 C2/C3: cappedOrder() truncates by an
         // ingredient's *best* effect across all its effects, which has
@@ -1103,7 +1123,7 @@
         // *first* selection of a given effect pays this cost; every
         // subsequent compute() while it's active reuses the cached result,
         // same principle as STORE's per-source cache for the default build.
-        var effCacheKey=c.effectKey+'|'+R;
+        var effCacheKey=c.effectKeys.join(',')+'|'+R;
         EFFSTORE[CURKEY]=EFFSTORE[CURKEY]||{};
         var effCached=EFFSTORE[CURKEY][effCacheKey];
         if(effCached){
@@ -1112,7 +1132,14 @@
           var effOrder=[];
           for(var di=0;di<DATA.length;di++){
             var des=DATA[di].e,has=false;
-            for(var dj=0;dj<des.length;dj++){if(des[dj].k===c.effectKey){has=true;break;}}
+            // ANY of the wanted effects, not all. A recipe carrying two
+            // effects is usually two ingredients each bringing one, so the
+            // pool has to hold both halves.
+            for(var dj=0;dj<des.length&&!has;dj++){
+              for(var dk=0;dk<c.effectKeys.length;dk++){
+                if(des[dj].k===c.effectKeys[dk]){has=true;break;}
+              }
+            }
             if(has)effOrder.push(di);
           }
           // Defensive ceiling only — GTS/GTS CE's most common effect
@@ -1123,7 +1150,15 @@
           // expensive even once, not a fix for anything seen so far.
           if(effOrder.length>CAP){
             effOrder.sort(function(a,b){
-              function ev(ix){var des2=DATA[ix].e;for(var z=0;z<des2.length;z++){if(des2[z].k===c.effectKey)return pot(des2[z]);}return 0;}
+              function ev(ix){
+                var des2=DATA[ix].e,best=0;
+                for(var z=0;z<des2.length;z++){
+                  for(var zk=0;zk<c.effectKeys.length;zk++){
+                    if(des2[z].k===c.effectKeys[zk]){var pv=pot(des2[z]);if(pv>best)best=pv;}
+                  }
+                }
+                return best;
+              }
               return ev(b)-ev(a);
             });
             effOrder=effOrder.slice(0,CAP);
@@ -1162,11 +1197,19 @@
       // included. So the top result for Restore Health could be a poison that
       // happens to heal a little. Ranking by the searched effect's own
       // contribution is what was actually asked for.
-      const byEff=(c.sort==='effect'&&c.effectKey);
+      const wanted=c.effectKeys||[];
+      const byEff=(c.sort==='effect'&&wanted.length);
+      // With several effects chosen, rank on what they are worth together -
+      // the rest of the recipe is not what was asked for.
       function effOnly(cb,isP){
         const es=cb.e;
-        for(let q=0;q<es.length;q++)if(es[q].k===c.effectKey)return effV(es[q],c,isP);
-        return 0;
+        let sum=0;
+        for(let q=0;q<es.length;q++){
+          for(let w=0;w<wanted.length;w++){
+            if(es[q].k===wanted[w]){sum+=effV(es[q],c,isP);break;}
+          }
+        }
+        return sum;
       }
       // Ascending is the same selection with the sign flipped, so one
       // comparison path covers both directions.
@@ -1198,14 +1241,16 @@
             for(let z3=0;z3<idxs.length;z3++){if(!ownedSet.has(idxs[z3])){missing=true;break;}}
             if(missing)continue;
           }
-          if(c.effectKey){
-            // Redundant when effectKey drove the order rebuild above, but
-            // required when craftableOnly took that slot instead (the two
-            // filters can be active together) — cheap, and keeps this
-            // correct regardless of which branch built useC2/useC3.
-            let hasEff=false;
-            for(let z4=0;z4<cb.e.length;z4++){if(cb.e[z4].k===c.effectKey){hasEff=true;break;}}
-            if(!hasEff)continue;
+          if(wanted.length){
+            // EVERY wanted effect must be present. The pool above only
+            // guarantees each ingredient has at least one of them.
+            let missingEff=false;
+            for(let w=0;w<wanted.length&&!missingEff;w++){
+              let has=false;
+              for(let z4=0;z4<cb.e.length;z4++){if(cb.e[z4].k===wanted[w]){has=true;break;}}
+              if(!has)missingEff=true;
+            }
+            if(missingEff)continue;
           }
           const isP=cb.poison;
           if(c.type==='potion'&&isP)continue;
@@ -1305,7 +1350,7 @@
   // answer to "what should I combine?".
   const state={type:'all',excludeRare:false,
                requireIdx:null,view:'mine',search:'',ownedOnly:false,
-               effectKey:null,sort:'potency',dir:'desc',
+               effectKeys:[],sort:'potency',dir:'desc',
                gridSort:'best',gridDir:'desc'};
   function isRecipeView(){return state.view==='mine'||state.view==='all';}
 
@@ -1687,9 +1732,9 @@
     // tell them anything they did not already know.
     const cfg={mix:'both',type:state.type,excludeRare:state.excludeRare,
       incCC:true,incMod:true,requireIdx:state.requireIdx,
-      craftableOnly:state.view==='mine',effectKey:state.effectKey,
-      // An effect sort with no effect selected would rank everything at zero.
-      sort:(state.sort==='effect'&&state.effectKey==null)?'potency':state.sort,
+      craftableOnly:state.view==='mine',effectKeys:state.effectKeys.slice(),
+      // An effect sort with nothing selected would rank everything at zero.
+      sort:(state.sort==='effect'&&!state.effectKeys.length)?'potency':state.sort,
       dir:state.dir};
     if(cfg.craftableOnly)cfg.ownedIdx=Array.from(ownedIndexSet());
     // Counts parallel to DATA, so the worker can work out how many of each
@@ -1716,8 +1761,11 @@
   let lastResult=null;
   // What the searched effect alone is worth in a given recipe.
   function effContribution(p){
-    for(let i=0;i<p.parts.length;i++)if(p.parts[i].k===state.effectKey)return p.parts[i].v;
-    return 0;
+    let sum=0;
+    for(let i=0;i<p.parts.length;i++){
+      if(state.effectKeys.indexOf(p.parts[i].k)>-1)sum+=p.parts[i].v;
+    }
+    return sum;
   }
   // The strongest thing you can currently brew, so "one ingredient away" can
   // say what finding something would actually be worth.
@@ -1727,15 +1775,31 @@
     const led=$('ledger');led.classList.remove('busy');
     const top=m.top;
     if(!top.length){
-      led.innerHTML='<div class="empty">No mixtures match these conditions. Loosen the filters and try again.</div>';
-      $('summary').textContent='';
+      // "Nothing does that" is a real answer and worth saying properly,
+      // especially for a combination of effects that simply does not exist.
+      let msg;
+      const names=state.effectKeys.map(effectName);
+      if(names.length>1){
+        msg='<b>Nothing does all of that.</b>No recipe '+
+            (state.view==='mine'?'you can brew ':'in your load order ')+
+            'combines '+esc(names.join(' and '))+'.';
+        if(state.view==='mine')msg+='<br>Try <b>All Recipes</b> — the ingredients may exist, just not in your pack.';
+        else msg+='<br>Drop one of them to see what is possible on its own.';
+      }else if(names.length===1){
+        msg='<b>Nothing here does '+esc(names[0])+'.</b>'+
+            (state.view==='mine'?'Try <b>All Recipes</b> — you may simply not be carrying the ingredients.':'');
+      }else{
+        msg='No recipes match these conditions. Loosen the filters and try again.';
+      }
+      led.innerHTML='<div class="empty">'+msg+'</div>';
+      $('summary').textContent=(names.length?'Nothing matches.':'');
       return;
     }
     let filt=[];
     if(state.excludeRare)filt.push('farmable only');
     if(state.type!=='all')filt.push(state.type+'s');
     if(state.requireIdx!=null)filt.push('with '+ingName(state.requireIdx));
-    if(state.effectKey!=null)filt.push('with effect '+effectName(state.effectKey));
+    if(state.effectKeys.length)filt.push('with '+state.effectKeys.map(effectName).join(' and '));
     const scope=state.view==='mine'
       ? 'you can brew from the '+fmt(Inventory.count())+' ingredients in your pack'
       : 'your load order allows';
@@ -1767,8 +1831,10 @@
     // While an effect is selected its own contribution gets a column and
     // becomes the default order, so the row order visibly matches the number
     // it is sorted on rather than looking shuffled against Potency.
-    const effOn=(state.effectKey!=null);
-    const effLabel=effOn?effectName(state.effectKey):'';
+    const effOn=(state.effectKeys.length>0);
+    const effLabel=effOn?(state.effectKeys.length===1
+      ? effectName(state.effectKeys[0])
+      : state.effectKeys.length+' effects'):'';
     const head='<thead><tr>'+
       '<th class="num">#</th>'+
       (effOn?th('effect',esc(effLabel),'num'):'')+
@@ -1786,7 +1852,7 @@
 
       const effs=p.parts.map(function(e){
         const cls=e.h?'bad':'good';
-        const hl=(state.effectKey!=null&&e.k===state.effectKey)?' hl':'';
+        const hl=(state.effectKeys.indexOf(e.k)>-1)?' hl':'';
         return '<span class="e '+cls+hl+'">'+esc(e.n)+'<span class="m">'+fmt(e.v)+'</span></span>';
       }).join('<span class="sep"> · </span>');
 
@@ -1995,6 +2061,7 @@
     }
     inp.value='';state.search='';
     setViewNote();
+    renderEffPick();
     // Moving between Your Ledger and All Recipes changes the search itself,
     // not just what is displayed, so it has to re-run rather than re-sort.
     if(isRecipeView()&&(!wasRecipe||prev!==v))compute();
@@ -2026,7 +2093,7 @@
     const seq=++loadSeq;
     const key='export:'+seq;          // a fresh key forces the worker to rebuild
     state.requireIdx=null; showReq();
-    state.effectKey=null;
+    state.effectKeys=[];
     if(state.sort==='effect'){state.sort='potency';state.dir='desc';}
     showEffectChip();
     ready=false; pending=null;
@@ -2042,6 +2109,7 @@
     buildEdIndex(key,DATA);
     buildEffectIndex(key,DATA);
     buildAmbig();
+    buildTopEffects();
     gridBuilt=false; $('grid').innerHTML='';
 
     // Owned ingredients are keyed on the load-order fingerprint, so the same
@@ -2127,8 +2195,20 @@
     const b=e.target.closest('.owned-match-row');if(!b)return;
     selectSearchResult(b);
   });
+  $('effPick').addEventListener('click',function(e){
+    const b=e.target.closest('.effchip');
+    if(!b)return;
+    if(b.id==='effMore'){$('search').focus();return;}
+    if(b.id==='effClearAll'){
+      state.effectKeys=[];
+      if(state.sort==='effect'){state.sort='potency';state.dir='desc';}
+      showEffectChip();compute();return;
+    }
+    toggleEffect(b.dataset.eff);
+  });
+
   $('effectClear').addEventListener('click',function(){
-    state.effectKey=null;
+    state.effectKeys=[];
     if(state.sort==='effect'){state.sort='potency';state.dir='desc';}
     showEffectChip();compute();
   });
@@ -2363,11 +2443,60 @@
     const needTag=effectTagNeeded(ordered); // pre-truncation, same reasoning as fidNeeded
     return {results:ordered.slice(0,8),needTag:needTag};
   }
+  // Choosing an effect means you want the best recipe FOR that effect, so it
+  // also becomes what the list is ranked by.
+  function toggleEffect(k){
+    const i=state.effectKeys.indexOf(k);
+    if(i>-1)state.effectKeys.splice(i,1);
+    else state.effectKeys.push(k);
+    if(state.effectKeys.length){state.sort='effect';state.dir='desc';}
+    else if(state.sort==='effect'){state.sort='potency';state.dir='desc';}
+    showEffectChip();
+    compute();
+  }
+
   function showEffectChip(){
-    const chip=$('effectChip');
-    if(state.effectKey!=null){$('effectChipName').textContent=effectName(state.effectKey);chip.classList.add('show');}
-    else chip.classList.remove('show');
+    renderEffPick();
     updateChipLine();
+  }
+
+  // The effect search was the most powerful thing on the page and the least
+  // visible: an unlabelled box you had to already know about. These are the
+  // effects this load order can make the most of, one click each.
+  let TOPEFF=[];
+  function buildTopEffects(){
+    const count={},name={};
+    for(let i=0;i<DATA.length;i++){
+      const e=DATA[i].e;
+      for(let j=0;j<e.length;j++){count[e[j].k]=(count[e[j].k]||0)+1;name[e[j].k]=e[j].n;}
+    }
+    TOPEFF=Object.keys(count)
+      .sort(function(a,b){return count[b]-count[a]||(name[a]<name[b]?-1:1);})
+      .slice(0,10)
+      .map(function(k){return {k:k,n:name[k]};});
+  }
+
+  function renderEffPick(){
+    const el=$('effPick');
+    if(!el)return;
+    if(!isRecipeView()||!DATA.length){el.classList.add('hidden');return;}
+    const chosen=state.effectKeys;
+    let html='<span class="effpick-label">'+
+      (chosen.length?'Must do':'Want a particular effect?')+'</span>';
+    html+=chosen.map(function(k){
+      return '<button type="button" class="effchip on" data-eff="'+esc(k)+'">'+
+             esc(effectName(k))+'<span class="x">&times;</span></button>';
+    }).join('');
+    if(chosen.length)html+='<span class="effpick-and">and</span>';
+    const offer=TOPEFF.filter(function(x){return chosen.indexOf(x.k)<0;})
+                      .slice(0,chosen.length?6:8);
+    html+=offer.map(function(x){
+      return '<button type="button" class="effchip" data-eff="'+esc(x.k)+'">'+esc(x.n)+'</button>';
+    }).join('');
+    html+='<button type="button" class="effchip more" id="effMore">anything else&hellip;</button>';
+    if(chosen.length)html+='<button type="button" class="effchip clear" id="effClearAll">clear</button>';
+    el.innerHTML=html;
+    el.classList.remove('hidden');
   }
   // ---- One search box, ingredients and effects together ----
   // Two boxes made the user decide, before typing, whether the thing in their
@@ -2451,10 +2580,7 @@
   function selectSearchResult(el){
     if(el.dataset.kind==='ing'){state.requireIdx=+el.dataset.idx;showReq();}
     else{
-      state.effectKey=el.dataset.key;
-      // Choosing an effect means you want the best recipe FOR that effect.
-      state.sort='effect';state.dir='desc';
-      showEffectChip();
+      toggleEffect(el.dataset.key);
     }
     $('search').value='';state.search='';
     $('searchMatches').classList.remove('show');
@@ -2464,7 +2590,7 @@
 
   // The chip row carries no height until something is in it.
   function updateChipLine(){
-    const any=state.requireIdx!=null||state.effectKey!=null;
+    const any=state.requireIdx!=null;
     $('chipLine').classList.toggle('has-chips',any);
   }
 
