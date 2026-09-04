@@ -331,6 +331,7 @@
   .igtbl .find:hover{color:var(--gold-bright);border-bottom-color:var(--gold)}
   .igtbl .find .go{color:var(--gold-dim)}
   .igtbl .c-eff{font-size:.82rem}
+  .igtbl .c-eff .e.hl{color:var(--gold-bright);font-weight:600}
   /* One ingredient away. Sits on Your Ledger because it is a fact about your
      pack, not about the load order. */
   .gap{
@@ -1896,12 +1897,25 @@
     const q=state.search.trim().toLowerCase();
     const ownedOnly=state.ownedOnly;
     const rows=[];
+    // Match the ingredient's name OR any effect it has. Typing "Restore
+    // Health" here is the obvious thing to do, and it used to return nothing.
+    let byEffect=0;
     for(let i=0;i<DATA.length;i++){
       const d=DATA[i];
-      if(q&&d.n.toLowerCase().indexOf(q)<0)continue;
+      let hit=!q;
+      if(q){
+        hit=d.n.toLowerCase().indexOf(q)>-1;
+        if(!hit){
+          for(let e=0;e<d.e.length;e++){
+            if(d.e[e].n.toLowerCase().indexOf(q)>-1){hit=true;break;}
+          }
+          if(hit)byEffect++;
+        }
+      }
+      if(!hit)continue;
       const have=Inventory.get(d.ed);
       if(ownedOnly&&!have)continue;
-      rows.push({i:i,d:d,have:have,bp:bestPairOf(i)});
+      rows.push({i:i,d:d,have:have,bp:bestPairOf(i),q:q});
     }
     const dir=(state.gridDir==='asc')?1:-1;
     rows.sort(function(a,b){
@@ -1928,7 +1942,8 @@
     const body=rows.map(function(r){
       const d=r.d, bp=r.bp;
       const effs=d.e.map(function(e){
-        return '<span class="e '+(e.h?'bad':'good')+'">'+esc(e.n)+'</span>';
+        const on=(r.q&&e.n.toLowerCase().indexOf(r.q)>-1)?' hl':'';
+        return '<span class="e '+(e.h?'bad':'good')+on+'">'+esc(e.n)+'</span>';
       }).join('<span class="sep"> · </span>');
       return '<tr data-idx="'+r.i+'">'+
         '<td class="c-ing"><span class="ing-n">'+esc(d.n)+'</span>'+(AMBIG[r.i]||'')+'</td>'+
@@ -1945,6 +1960,7 @@
     $('grid').innerHTML='<div class="ltbl-wrap"><table class="ltbl igtbl">'+head+'<tbody>'+body+'</tbody></table></div>';
     gridBuilt=true;
     $('reagentSummary').textContent=fmt(rows.length)+' of '+fmt(DATA.length)+' ingredients'+
+      (q?(byEffect?' matching "'+q+'" by name or effect':' matching "'+q+'"'):'')+
       (ownedOnly?' · owned only':'')+
       (INGSTATS?'':' · working out the best pairs…');
   }
@@ -1971,7 +1987,7 @@
     $('searchMatches').classList.remove('show');
     const inp=$('search');
     if(v==='ingredients'){
-      inp.placeholder='Search ingredients…';
+      inp.placeholder='Search an ingredient or an effect…';
       if(!gridBuilt)buildGrid();
       filterGrid();
     }else{
