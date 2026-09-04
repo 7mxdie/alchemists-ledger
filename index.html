@@ -1655,6 +1655,25 @@
   // a dataset only means dropping a new export into its data file.
   const VANILLA={'Skyrim.esm':1,'Update.esm':1,'Dawnguard.esm':1,'HearthFires.esm':1,'Dragonborn.esm':1};
   const RARE={'Nirnroot':1,'Crimson Nirnroot':1,'Human Flesh':1,'Human Heart':1,'Daedra Heart':1,'Jarrin Root':2};
+  // Three vanilla records come back from the game named after their EditorID
+  // rather than the name Skyrim actually shows - "deathBell", "histcarp",
+  // "scathecraw". Confirmed against the game: the alchemy menu says Deathbell.
+  //
+  // Keyed on plugin:localId, never on the name, so this can only ever touch
+  // these three exact records. Title-casing by pattern would wreck the many
+  // mod ingredients that are deliberately styled (iNeed, aMidianBorn and so
+  // on), and would hide the problem rather than correct it.
+  //
+  // WORKAROUND, not a fix. The root cause is on the mod side: GetName() is
+  // returning an EditorID for records whose display name it cannot resolve.
+  // Because these are EditorIDs and not stale display names, ingredients
+  // renamed by other mods are unaffected - a wrong-override bug would show
+  // old names, not EditorIDs.
+  const NAME_FIX={
+    'skyrim.esm:333512':'Deathbell',
+    'skyrim.esm:1076760':'Histcarp',
+    'dragonborn.esm:97943':'Scathecraw'
+  };
   const TESTPAT=/(test|debug|zzz|delete|xxx|_ro_)/i;
   // ---- MOD EXPORT REGION START ----
   // Turns the companion mod's columnar export into the internal record the
@@ -1697,8 +1716,10 @@
       const plugin=String(cat.plugin[i]||'');
       let c;
       if(VANILLA[plugin])c=0; else if(/^cc/i.test(plugin)||/^_resourcepack/i.test(plugin))c=1; else c=2;
+      const edKey=plugin.toLowerCase()+':'+(cat.localId[i]|0);
+      const nm=NAME_FIX[edKey]||cat.name[i]||'(unnamed)';
       out.push({
-        n:cat.name[i]||'(unnamed)',
+        n:nm,
         s:plugin,
         r:RARE[cat.name[i]]||0,
         cat:c,
