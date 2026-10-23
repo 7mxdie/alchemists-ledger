@@ -1,6 +1,10 @@
 # The Alchemist's Ledger
 
-**[7mxdie.github.io/alchemists-ledger](https://7mxdie.github.io/alchemists-ledger/)**
+**[mothpriest.com/ledger.html](https://mothpriest.com/ledger.html)**
+
+The Ledger now lives on [Moth Priest](https://mothpriest.com). The old address,
+7mxdie.github.io/alchemists-ledger, redirects there. This repository is still
+its source: the page on Moth Priest is built from this `index.html`.
 
 An alchemy recipe finder for modded Skyrim. It answers one question:
 
